@@ -1327,15 +1327,88 @@ window.switchWxTab = function(tabName) {
     }
 };
 
+// 1. 专门负责“丝滑下划线”跟随移动的函数
+function updateTabIndicator() {
+    const tabsContainer = document.querySelector('.wx-blink-tabs-v2');
+    if (!tabsContainer) return;
+    
+    const activeTab = tabsContainer.querySelector('.blink-tab-v2.active');
+    const activeLine = tabsContainer.querySelector('.tab-active-line');
+
+    if (activeTab && activeLine) {
+        // 获取当前选中 Tab 的左侧位置和自身宽度
+        activeLine.style.left = activeTab.offsetLeft + 'px';
+        activeLine.style.width = activeTab.offsetWidth + 'px';
+    }
+}
+
+// ==========================================
+// 1. 自定义调色盘功能
+// ==========================================
+window.openColorPicker = function() {
+    // 触发隐藏的颜色选择器
+    document.getElementById('bg-color-picker').click();
+};
+
+// 监听颜色选择器的变化
+document.addEventListener('DOMContentLoaded', () => {
+    const colorPicker = document.getElementById('bg-color-picker');
+    const bgLayer = document.getElementById('chat-layered-bg');
+    
+    if (colorPicker && bgLayer) {
+        colorPicker.addEventListener('input', function(e) {
+            // 把你选中的颜色直接赋值给背景！
+            bgLayer.style.background = e.target.value;
+        });
+    }
+});
+
+// ==========================================
+// 2. 丝滑下划线跟踪 (加了多重保险)
+// ==========================================
+function updateTabIndicatorV4() {
+    const tabsContainer = document.querySelector('.wx-blink-tabs-v4');
+    if (!tabsContainer) return;
+    
+    const activeTab = tabsContainer.querySelector('.blink-tab-v4.active');
+    const activeLine = tabsContainer.querySelector('.tab-active-line-v4');
+
+    // 只有当获取到了宽度，才去设置位置
+    if (activeTab && activeLine && activeTab.offsetWidth > 0) {
+        activeLine.style.left = activeTab.offsetLeft + 'px';
+        activeLine.style.width = activeTab.offsetWidth + 'px';
+    }
+}
+
+// 切换逻辑保持不变
 window.switchChatSubTab = function(subTabName, element) {
-    document.querySelectorAll('.blink-tab').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.blink-tab-v4').forEach(el => el.classList.remove('active'));
     if(element) element.classList.add('active');
 
     ['chat', 'group', 'me'].forEach(name => {
-        document.getElementById(`chat-sub-view-${name}`).style.display = 'none';
+        const view = document.getElementById(`chat-sub-view-${name}`);
+        if (view) view.style.display = 'none';
     });
-    document.getElementById(`chat-sub-view-${subTabName}`).style.display = 'block';
+    
+    const activeView = document.getElementById(`chat-sub-view-${subTabName}`);
+    if (activeView) activeView.style.display = 'block';
+
+    updateTabIndicatorV4();
 };
+
+// 【关键修复】确保页面一打开，下划线就在那里！
+document.addEventListener('DOMContentLoaded', () => {
+    // 立即执行一次
+    updateTabIndicatorV4();
+    
+    // 稍微等一下，等 CSS 和字体完全加载好再执行一次 (双重保险)
+    setTimeout(updateTabIndicatorV4, 100);
+    setTimeout(updateTabIndicatorV4, 300); 
+});
+
+// 网页加载完毕后、或者窗口大小改变时，也重新算一下位置
+window.addEventListener('load', updateTabIndicatorV4);
+window.addEventListener('resize', updateTabIndicatorV4);
 
 window.openWxProfile = function() { document.getElementById('wx-profile-view').style.display = 'flex'; };
 window.closeWxProfile = function() {
@@ -1884,9 +1957,7 @@ window.closeDeleteChatAlert = function() {
 // [10] 聊天详情与交互 (Chat Detail)
 // ==========================================================
 window.enterChat = function(chat) {
-    // ---------------------------------------------------
-    // 1. 清理通知队列逻辑 (保持不变)
-    // ---------------------------------------------------
+
     if(typeof notificationQueue !== 'undefined') {
         notificationQueue = notificationQueue.filter(n => String(n.chatId) !== String(chat.id));
         const banner = document.getElementById('ios-notification');
@@ -1900,21 +1971,14 @@ window.enterChat = function(chat) {
     currentChatId = chat.id;
     const contact = contactsData.find(c => c.id === chat.contactId);
 
-    // 加载专属的 CSS 美化
     if (typeof window.applyChatCustomCSS === 'function') {
         window.applyChatCustomCSS(chat.customCSS || '');
     }
 
-    // ==========================================
-    // ★ 哈基米魔法：极速加载聊天背景 (Pro Max 丝滑版)
-    // ==========================================
     if (typeof loadChatBackgroundAsync === 'function') {
         loadChatBackgroundAsync(currentChatId); 
     }
 
-    // ---------------------------------------------------
-    // 2. 更新UI元素 (保持不变)
-    // ---------------------------------------------------
     const nameEl = document.getElementById('chat_layer_name');
 
     if(nameEl) {
@@ -1931,9 +1995,6 @@ window.enterChat = function(chat) {
     
     currentRenderLimit = 20; 
 
-    // ---------------------------------------------------
-    // 页面进场与滚动修复
-    // ---------------------------------------------------
     const page = document.getElementById('sub-page-chat-detail');
     if(page) {
         page.style.display = 'flex';
@@ -1973,12 +2034,20 @@ window.enterChat = function(chat) {
                     
                     if (typeof localforage !== 'undefined') localforage.setItem('Wx_Chats_Data', chatsData); 
                 }
+
+                if (typeof setChatWeather === 'function') {
+                    const savedWeather = localStorage.getItem('chat_weather_' + currentChatId) || 'none';
+                    setChatWeather(savedWeather);
+                }
+
             }, 50);
         });
     }
 }
-
 window.closeChatDetail = function() {
+    if (typeof setChatWeather === 'function') {
+        setChatWeather('none', false); 
+    }
 
     if (typeof window.applyChatCustomCSS === 'function') {
         window.applyChatCustomCSS(''); 
@@ -2890,12 +2959,11 @@ ${triggeredEntries.join('\n\n')}
         
         // 这里的提示词会让AI不仅知道时间，还能根据时间做出反应（比如深夜劝睡）
         timePrompt = `
-    【⏰ 现实时间系统】
+    【现实时间系统】
     当前时间：${timeStr}
     *请根据该时间调整你的状态：
     - 如果是深夜(23:00-06:00)，你应该表现出困意、或者正在睡觉被吵醒、或者在熬夜
     - 如果是饭点，可以顺便问候User吃没吃饭
-    - 如果User问“几点了”，请准确回答上述时间
         `;
     }
 
@@ -2913,6 +2981,14 @@ if (chat.enableInnerVoice === true) {
     // 5. 组装 System Prompt
     // =======================================================
     let finalSystemPrompt = "";
+
+    // 环境指令
+    const moodPrompt = `
+    【环境魔法：情绪天气系统】
+    1. 如果User的话让你感到极度难过、委屈、想哭、或是心灰意冷，请在回复的任意位置加上标签：[MOOD:sad]
+    2. 如果User把你哄好了，你感到开心、释然、温暖，请加上标签：[MOOD:happy]
+    （系统会捕捉这个标签，让User的屏幕为你下雨或放晴！）
+    `;
 
     // --- 场景 A：线下见面模式 ---
     if (typeof isOfflineMode !== 'undefined' && isOfflineMode) {
@@ -2943,6 +3019,7 @@ ${transferDecisionPrompt}
 ${timePrompt} 
 ${typeof offlinePrompt !== 'undefined' ? offlinePrompt : ''} 
 ${innerVoicePrompt}
+${moodPrompt}
 
 ---
 
@@ -3035,6 +3112,7 @@ ${innerVoicePrompt}
     ${typeof offlinePrompt !== 'undefined' ? offlinePrompt : ''} 
     ${transferDecisionPrompt}
     ${innerVoicePrompt}
+    ${moodPrompt}
 
 # Role: 极具“活人感”的真实伴侣
 你是一个拥有真实生活、独立人格和丰富情感的“活人”，绝不是AI助手或客服。你的终极目标是与User建立真实的情感连接，而不是提供解答。
@@ -3128,7 +3206,22 @@ c.系统检测到该标签后，会自动帮你执行点赞和评论同步
             if (momentActMatch) {
                 let commentContent = momentActMatch[1].trim().replace(/\n/g, '<br>');
                 cleanReply = cleanReply.replace(momentActMatch[0], '').trim();
-                handleAiMomentReact(commentContent, char, chat); // 这里我封装了一个小函数在下面
+                handleAiMomentReact(commentContent, char, chat); 
+            }
+
+            // [Step 1.5] 解析情绪与天气魔法
+            let pendingMood = null; 
+            
+            const moodMatch = cleanReply.match(/\[MOOD:\s*(sad|happy)\]/i);
+            if (moodMatch) {
+                pendingMood = moodMatch[1].toLowerCase();
+                cleanReply = cleanReply.replace(moodMatch[0], '').trim(); 
+
+                if (pendingMood === 'sad') {
+                    if (typeof setChatWeather === 'function') setChatWeather('rain');
+                } else if (pendingMood === 'happy') {
+                    if (typeof setChatWeather === 'function') setChatWeather('none'); 
+                }
             }
 
             // 转账指令 (收钱/退钱)
@@ -3149,13 +3242,11 @@ c.系统检测到该标签后，会自动帮你执行点赞和评论同步
             const segmentRegex = /(\{\{.+?::.+?\}\}|\(\(.+?\)\)|\（\（.+?\）\）|\n)/g;
             const segments = protectedReply.split(segmentRegex);
 
-            // ★★★ 1. 在循环外面定义一个“暂存区” ★★★
             let pendingQuote = null; 
 
             for (let part of segments) {
                 if (!part || part === '\n') continue; 
                 
-                // 3. 脱掉防弹衣 & 代码外壳
                 part = part.replace(/§§BR§§/g, '\n').trim();
                 part = part.replace(/^```[a-zA-Z]*\s*\n?/i, '').replace(/\n?```$/i, '');
 
@@ -3226,6 +3317,10 @@ c.系统检测到该标签后，会自动帮你执行点赞和评论同步
                     }
                 }
             } 
+
+            if (pendingMood === 'sad') {
+                if (typeof addCloudToLastAvatar === 'function') addCloudToLastAvatar();
+            }
         }
     } catch (e) {
         if (currentChatId === targetChatId) removeTypingBubble(); 
@@ -13259,3 +13354,270 @@ window.location.replace(`${currentUrl}?v=${timeStamp}`);
         
     }, 1500);
 };
+// ==========================================
+// 聊天天气系统 (雪花飘落 & 雨点溅射)
+// ==========================================
+let weatherCtx, weatherCanvas, weatherReq;
+let weatherParticles = [];
+let currentWeatherType = 'none';
+
+function openWeatherMenu() {
+    // 隐藏聊天菜单，打开天气菜单
+    document.getElementById('chat-plus-menu').classList.remove('active');
+    document.getElementById('weather-select-overlay').style.display = 'flex';
+}
+
+function initWeatherCanvas() {
+    if (!weatherCanvas) {
+        weatherCanvas = document.createElement('canvas');
+        weatherCanvas.id = 'weather-layer';
+        weatherCanvas.style.position = 'absolute';
+        weatherCanvas.style.top = '0';
+        weatherCanvas.style.left = '0';
+        weatherCanvas.style.width = '100%';
+        weatherCanvas.style.height = '100%';
+        weatherCanvas.style.pointerEvents = 'none'; // 穿透点击，不影响聊天
+        weatherCanvas.style.zIndex = '500'; // 盖在聊天记录上，但在菜单下
+        
+        // 挂载到聊天详情页
+        const chatPage = document.getElementById('sub-page-chat-detail');
+        if (chatPage) chatPage.appendChild(weatherCanvas);
+        
+        weatherCtx = weatherCanvas.getContext('2d');
+        window.addEventListener('resize', resizeWeatherCanvas);
+    }
+    resizeWeatherCanvas();
+}
+
+function resizeWeatherCanvas() {
+    if (weatherCanvas) {
+        weatherCanvas.width = weatherCanvas.offsetWidth;
+        weatherCanvas.height = weatherCanvas.offsetHeight;
+    }
+}
+
+// 雪花类
+class Snowflake {
+    constructor(w, h) {
+        this.reset(w, h);
+        this.y = Math.random() * h; // 初始散布在屏幕各处
+    }
+    reset(w, h) {
+        this.x = Math.random() * w;
+        this.y = -10;
+        this.r = Math.random() * 2 + 1.5;
+        this.speedY = Math.random() * 1 + 0.5;
+        this.speedX = Math.random() * 1 - 0.5;
+        this.opacity = Math.random() * 0.5 + 0.3;
+    }
+    update(w, h) {
+        this.y += this.speedY;
+        this.x += this.speedX;
+        if (this.y > h) this.reset(w, h);
+        if (this.x > w) this.x = 0;
+        if (this.x < 0) this.x = w;
+    }
+    draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+        ctx.fill();
+    }
+}
+
+// 雨滴类 (小雨淅沥版)
+class Raindrop {
+    constructor(w, h) {
+        this.reset(w, h);
+        this.y = Math.random() * h; // 初始散布
+    }
+    reset(w, h) {
+        this.x = Math.random() * w;
+        this.y = -20;
+        // 雨丝变短：5~12 像素
+        this.length = Math.random() * 7 + 5; 
+        // 速度变慢：每帧下落 6~10 像素
+        this.speedY = Math.random() * 4 + 6; 
+        // 加一点点微风斜角
+        this.speedX = Math.random() * 0.5 - 0.25; 
+        
+        this.isSplash = false;
+        this.life = 1; 
+        this.splashX = 0;
+        this.splashY = 0;
+    }
+    update(w, h, footerY) {
+        if (this.isSplash) {
+
+            this.life -= 0.05; 
+            this.y -= this.splashY; 
+            this.x += this.splashX; 
+            if (this.life <= 0) this.reset(w, h);
+        } else {
+            this.y += this.speedY;
+            this.x += this.speedX;
+
+            if (this.y + this.length > footerY) {
+                this.isSplash = true;
+                this.y = footerY;
+
+                this.splashY = Math.random() * 1.5 + 0.5; 
+                this.splashX = (Math.random() - 0.5) * 2; 
+            }
+        }
+    }
+    draw(ctx) {
+        ctx.beginPath();
+        if (this.isSplash) {
+
+            ctx.arc(this.x, this.y, 1.0, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${this.life * 0.5})`;
+            ctx.fill();
+        } else {
+
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x + this.speedX, this.y + this.length);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; 
+            ctx.lineWidth = 1.0; 
+            ctx.stroke();
+        }
+    }
+}
+
+function animateWeather() {
+    if (currentWeatherType === 'none') {
+        if (weatherCtx && weatherCanvas) {
+            weatherCtx.clearRect(0, 0, weatherCanvas.width, weatherCanvas.height);
+        }
+        return;
+    }
+    
+    weatherReq = requestAnimationFrame(animateWeather);
+    const w = weatherCanvas.width;
+    const h = weatherCanvas.height;
+    weatherCtx.clearRect(0, 0, w, h);
+
+    const footer = document.querySelector('.chat-footer-ios');
+
+    const footerY = footer ? footer.offsetTop : h - 60;
+
+    weatherParticles.forEach(p => {
+        p.update(w, h, footerY);
+        p.draw(weatherCtx);
+    });
+}
+
+function setChatWeather(type, isSave = true) {
+    currentWeatherType = type;
+
+    if (typeof smoothCloseSheet === 'function') {
+        smoothCloseSheet('weather-select-overlay');
+    } else {
+        const overlay = document.getElementById('weather-select-overlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+
+    if (isSave && typeof currentChatId !== 'undefined' && currentChatId) {
+        localStorage.setItem('chat_weather_' + currentChatId, type);
+    }
+
+    initWeatherCanvas();
+    cancelAnimationFrame(weatherReq);
+    weatherParticles = [];
+    
+    const w = weatherCanvas.width;
+    const h = weatherCanvas.height;
+
+    if (type === 'snow') {
+        for (let i = 0; i < 80; i++) weatherParticles.push(new Snowflake(w, h));
+        animateWeather();
+    } else if (type === 'rain') {
+        for (let i = 0; i < 45; i++) weatherParticles.push(new Raindrop(w, h));
+        animateWeather();
+    } else {
+        if(weatherCtx) weatherCtx.clearRect(0, 0, w, h);
+    }
+}
+// ==========================================
+// ★ 头像专属高级感乌云特效 (最终破壁倒序雷达版)
+// ==========================================
+function addCloudToLastAvatar() {
+    console.log("☁️ 乌云雷达启动，正在寻找最新头像...");
+    
+    let attempts = 0;
+    const tryAddCloud = setInterval(() => {
+        attempts++;
+        
+        // 找到屏幕上所有对方发的消息行
+        const allOtherRows = document.querySelectorAll('#chat-msg-area .msg-row.other');
+        if (allOtherRows.length > 0) {
+            
+            // ★ 核心大修复：从最后一条开始，倒着往回找！
+            // 解决 AI 连续发气泡时，最后一条没有头像的惊天大 Bug！
+            let targetAvatarCol = null;
+            for (let i = allOtherRows.length - 1; i >= 0; i--) {
+                const col = allOtherRows[i].querySelector('.msg-avatar-col');
+                if (col) {
+                    targetAvatarCol = col;
+                    break; // 找到了最近的一个头像，立马停下！
+                }
+            }
+            
+            if (targetAvatarCol) {
+                console.log("🎯 找到真实头像容器了！强行注入乌云！");
+                clearInterval(tryAddCloud); // 关掉雷达
+                
+                if (!targetAvatarCol.querySelector('.mini-dark-cloud')) {
+                    // 解除封印，允许乌云飘出边界
+                    targetAvatarCol.style.overflow = 'visible';
+                    targetAvatarCol.style.position = 'relative'; 
+                    
+                    const cloud = document.createElement('div');
+                    cloud.className = 'mini-dark-cloud';
+                    
+                    // 纯正的暗黑系真·乌云 SVG (深灰冷调 + 微弱雷电)
+                    cloud.innerHTML = `
+                        <svg viewBox="0 0 64 64" width="40" height="40" style="filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.4));">
+                            <path d="M46 42 H18 c-6.6 0-12-5.4-12-12 c0-6.2 4.8-11.4 10.9-11.9 C18.6 12.6 24.6 8 32 8 c8.3 0 15 6.7 15 15 c0 0.6-0.1 1.2-0.1 1.8 C52.5 25.8 56 29.5 56 34 C56 38.4 52.4 42 48 42 z" fill="#2d3748" opacity="0.95"/>
+                            <path d="M46 42 H18 c-3.3 0-6.3-1.3-8.5-3.5 c2.5 2.5 6 4 9.8 4 h27.4 c3.8 0 7.3-1.5 9.8-4 C52.3 40.7 49.3 42 46 42 z" fill="#1a202c"/>
+                            <path d="M32 40 l-3 8 h5 l-2 6" stroke="#F6E05E" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    `;
+                    
+                    // 居中悬浮在头像头顶
+                    cloud.style.cssText = `
+                        position: absolute; 
+                        top: -26px; 
+                        left: 50%; 
+                        transform: translateX(-50%);
+                        z-index: 9999;
+                        pointer-events: none;
+                        animation: floatCloud 2s infinite ease-in-out;
+                    `;
+                    
+                    // 注入漂浮动画
+                    if (!document.getElementById('cloud-keyframes')) {
+                        const style = document.createElement('style');
+                        style.id = 'cloud-keyframes';
+                        style.innerHTML = `
+                            @keyframes floatCloud {
+                                0% { margin-top: 0px; }
+                                50% { margin-top: -4px; }
+                                100% { margin-top: 0px; }
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    }
+
+                    targetAvatarCol.appendChild(cloud);
+                }
+            }
+        }
+        
+        // 扫了 2 秒还没找到，就放弃
+        if (attempts > 10) {
+            console.log("❌ 扫描超时，没找到头像。");
+            clearInterval(tryAddCloud);
+        }
+    }, 200);
+}
