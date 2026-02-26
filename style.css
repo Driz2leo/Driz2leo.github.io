@@ -867,8 +867,8 @@ html, body, div, span, p, a, button, input, textarea {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 20px 0; 
-    padding-bottom: calc(20px + env(safe-area-inset-bottom)); 
+    padding: 14px 0; 
+    padding-bottom: calc(14px + env(safe-area-inset-bottom)); 
     border-top: 0.5px solid #eaeaea; 
     z-index: 999; }
 
@@ -881,11 +881,8 @@ html, body, div, span, p, a, button, input, textarea {
     height: 100%;
     cursor: pointer;
     position: relative;
-    /* 取消移动端点击时的灰色阴影 */
-    -webkit-tap-highlight-color: transparent; 
-}
+    -webkit-tap-highlight-color: transparent; }
 
-/* 图标容器：蓝杠定位的基准 */
 .wx-tab-icon {
     position: relative;
     width: 30px;
@@ -893,25 +890,20 @@ html, body, div, span, p, a, button, input, textarea {
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: transform 0.2s ease;
-}
+    transition: transform 0.2s ease; }
 
-/* 选中时图标轻轻上浮 */
 .wx-tab-item.active .wx-tab-icon {
-    transform: translateY(-2px);
-}
+    transform: translateY(-2px); }
 
 /* 图标 SVG 颜色控制 */
 .wx-tab-icon svg {
     width: 24px;
     height: 24px;
-    fill: #b0b0b0; /* 未选中的高级灰 */
-    transition: fill 0.3s ease;
-}
+    fill: #b0b0b0; 
+    transition: fill 0.3s ease; }
 
 .wx-tab-item.active svg {
-    fill: #222222; /* 选中后的深色 */
-}
+    fill: #222222; }
 
 /* 底部文字样式 */
 .wx-tab-item span {
@@ -919,8 +911,7 @@ html, body, div, span, p, a, button, input, textarea {
     color: #b0b0b0;
     margin-top: 5px;
     font-weight: 500;
-    transition: color 0.3s ease;
-}
+    transition: color 0.3s ease; }
 
 .wx-tab-item.active span {
     color: #222222; }
@@ -4111,7 +4102,64 @@ body, button, input, textarea, select, .edit-text {
 .mw-controls { display: flex; align-items: center; gap: 18px; margin-top: 5px; }
 .mw-btn { width: 24px; height: 24px; cursor: pointer; opacity: 0.9; }
 .mw-play-btn { width: 30px; height: 30px; }
+/* ====== SODA MUSIC 专属样式 ====== */
 
+/* 视图切换动画类 */
+.kugou-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.4s cubic-bezier(0.32, 1, 0.23, 1), opacity 0.4s ease;
+}
+.kugou-view:not(.active) {
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+}
+.kugou-view.active {
+    pointer-events: auto;
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    display: flex !important; /* 强制显示 active 状态 */
+}
+
+/* 唱片旋转动画 */
+@keyframes rotateDisk {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 波形动画增强 */
+.wave-bar {
+    width: 3px;
+    background-color: #fce76d;
+    border-radius: 3px;
+    animation: bounceWave 1s infinite ease-in-out alternate;
+}
+.wave-bar:nth-child(1) { height: 10px; animation-delay: -0.2s; }
+.wave-bar:nth-child(2) { height: 20px; animation-delay: -0.4s; }
+.wave-bar:nth-child(3) { height: 15px; animation-delay: -0.6s; }
+.wave-bar:nth-child(4) { height: 25px; animation-delay: -0.8s; }
+.wave-bar:nth-child(5) { height: 12px; animation-delay: -1.0s; }
+.wave-bar:nth-child(6) { height: 22px; animation-delay: -1.2s; }
+.wave-bar:nth-child(7) { height: 18px; animation-delay: -1.4s; }
+.wave-bar:nth-child(8) { height: 8px;  animation-delay: -1.6s; }
+
+@keyframes bounceWave {
+    0% { height: 5px; }
+    100% { height: 30px; }
+}
+
+/* 自定义滚动条 (隐藏丑陋的默认滚动条) */
+.home-content::-webkit-scrollbar,
+#lyric-view::-webkit-scrollbar,
+#music-search-results::-webkit-scrollbar,
+#playlist-content::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
 /* =========================================
    ✨ Doris 社交风音乐组件 (魔改版)
    ========================================= */
@@ -6442,4 +6490,15 @@ img { vertical-align: middle; }
 #wx-page-moments[style*="display: none"],
 #wx-page-me[style*="display: none"] {
     display: none !important;
+}
+/* 发帖界面的基础状态与动画过渡 */
+#insta-create-post-page {
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform: translateY(100%); /* 默认藏在屏幕下方 */
+    z-index: 999; /* 确保盖住别的层 */
+}
+
+/* 激活时的状态 */
+#insta-create-post-page.slide-up-active {
+    transform: translateY(0); /* 滑回原位 */
 }

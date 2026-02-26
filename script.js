@@ -1365,9 +1365,6 @@ window.switchChatSubTab = function(subTabName, element) {
 // ==========================================
 // 3. 其他交互功能 (颜色、菜单、个人主页)
 // ==========================================
-window.openColorPicker = function() {
-    document.getElementById('bg-color-picker').click();
-};
 
 window.toggleHeaderMenu = function() {
     const menu = document.getElementById('wx-header-menu');
@@ -1389,7 +1386,6 @@ window.closeWxProfile = function() {
         }, 400);
     }
 };
-
 // ==========================================
 // 4. 初始化
 // ==========================================
@@ -1397,9 +1393,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // 颜色选择器初始化
     const colorPicker = document.getElementById('bg-color-picker');
     const bgLayer = document.getElementById('chat-layered-bg');
+    
     if (colorPicker && bgLayer) {
+        
+        // ⭐ 新增第 1 步：页面一加载，先去“备忘录”里找找有没有存过颜色
+        const savedColor = localStorage.getItem('wx_chat_bg_color');
+        if (savedColor) {
+            bgLayer.style.background = savedColor; // 把背景设为存好的颜色
+            colorPicker.value = savedColor;        // 让隐形的取色器也同步成这个颜色
+        }
+
+        // 拖动调色盘时，实时预览颜色（不存，防止存得太频繁卡顿）
         colorPicker.addEventListener('input', (e) => {
             bgLayer.style.background = e.target.value;
+        });
+
+        // ⭐ 新增第 2 步：手指松开/确定颜色后，把它写进“备忘录”里！
+        colorPicker.addEventListener('change', (e) => {
+            const finalColor = e.target.value;
+            bgLayer.style.background = finalColor;
+            localStorage.setItem('wx_chat_bg_color', finalColor); // 关键：存起来！
         });
     }
 
@@ -1415,7 +1428,6 @@ document.addEventListener('click', (e) => {
     const trigger = e.target.closest('.wx-h-action-box');
     if (!trigger && menu && menu.classList.contains('active')) menu.classList.remove('active');
 });
-
 // ==========================================================
 // [6] 角色创建器 (Character Creator) - 完美修复版
 // ==========================================================
@@ -12075,6 +12087,19 @@ function timeAgo(date) {
         const imgData = window.currentInstaImageBlob;
         if (!imgData) { alert("请先选择一张图片！"); return; }
         const user = getCurrentUser(); 
+        
+        // 🤖 NPC 点赞生成逻辑
+        const expectedLikes = Math.floor(Math.random() * 10000000) + 20; // 随机生成 20 到 100 个赞
+        const futureLikes = [];
+        const now = Date.now();
+        const fourHours = 4 * 60 * 60 * 1000; // 4小时的毫秒数
+        
+        for (let i = 0; i < expectedLikes; i++) {
+
+            futureLikes.push(now + Math.random() * fourHours);
+        }
+        futureLikes.sort((a, b) => a - b); // 按时间先后排序
+
         const newPost = {
             id: Date.now(),
             authorName: user.name,
@@ -12082,11 +12107,16 @@ function timeAgo(date) {
             image: imgData,
             content: caption,
             filter: window.currentInstaFilter || '',
-            likes: 0, isLiked: false, isSaved: false, comments: [],
-            timestamp: new Date().toISOString()
+            likes: 0, 
+            isLiked: false, 
+            isSaved: false, 
+            comments: [],
+            pendingNpcLikes: futureLikes, 
+            timestamp: now
         };
+        
         window.instaLocalData.unshift(newPost);
-        await saveData();
+        await saveData(); // 注意这里调用你原有的 saveData()，要确保它存在
         window.refreshInstaAll();
         window.closeInstaCreate();
         setTimeout(() => window.switchInstaPage('insta-feed-page'), 100);
@@ -13276,6 +13306,7 @@ window.refreshInstaAll = function() {
             grid.style.gap = "2px";
             grid.style.padding = "0";
 
+grid.style.alignContent = "start"; 
             window.instaLocalData.forEach(post => {
                 const item = document.createElement('div');
                 item.className = 'grid-item';
@@ -13292,7 +13323,7 @@ window.refreshInstaAll = function() {
         }
     }
 };
-// ★ 新增：每次刷新页面时自动执行的恢复逻辑
+
 window.addEventListener('DOMContentLoaded', () => {
     // 1. 恢复下拉菜单里的预设列表
     if (typeof renderCssPresets === 'function') {
@@ -13312,6 +13343,51 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+    // ===========================
+    // 🤖 8. NPC 互动心跳系统
+    // ===========================
+    window.startNpcHeartbeat = function() {
+        // 每 8 秒钟检查一次有没有该放出的点赞
+        setInterval(() => {
+            let needsSave = false;
+            const now = Date.now();
+            
+            window.instaLocalData.forEach(post => {
+                if (post.pendingNpcLikes && post.pendingNpcLikes.length > 0) {
+                    let likesToAdd = 0;
+                    
+                    // 把所有时间已经到了的点赞从等待队列里“弹”出来
+                    while (post.pendingNpcLikes.length > 0 && post.pendingNpcLikes[0] <= now) {
+                        post.pendingNpcLikes.shift();
+                        likesToAdd++;
+                    }
+                    
+                    if (likesToAdd > 0) {
+                        post.likes = (post.likes || 0) + likesToAdd;
+                        needsSave = true;
+                        
+                        // 🌟 如果帖子正在屏幕上显示，直接动态更新数字，体验拉满！
+                        const feedLikeCountEl = document.querySelector(`#post-${post.id} .action-like-count`);
+                        if (feedLikeCountEl) {
+                            feedLikeCountEl.innerText = post.likes;
+                            // 可以加个小震动或者缩放动画
+                        }
+                    }
+                }
+            });
+            
+            // 如果有数据变化，静默保存到本地，保证刷新不丢
+            if (needsSave && typeof saveData === 'function') {
+                saveData(); 
+            }
+        }, 8000); 
+    };
+
+    // 页面加载完毕后，启动心跳！
+    document.addEventListener('DOMContentLoaded', () => {
+        window.startNpcHeartbeat();
+    });
+
 // ==========================================
 // ★ 检查更新与强制刷新缓存逻辑
 // ==========================================
@@ -13604,4 +13680,76 @@ function addCloudToLastAvatar() {
             clearInterval(tryAddCloud);
         }
     }, 200);
+}
+// ==================== SODA MUSIC 界面交互控制 ====================
+
+// 切换 主页 <-> 播放详情页
+function toggleView(viewName) {
+    const homeView = document.getElementById('kugou-home-view');
+    const playerView = document.getElementById('kugou-player-view');
+    
+    if (viewName === 'player') {
+        homeView.classList.remove('active');
+        // 稍微延迟一下确保动画顺滑
+        setTimeout(() => { homeView.style.display = 'none'; }, 400); 
+        
+        playerView.style.display = 'flex';
+        // 强制重绘，触发 transition
+        void playerView.offsetWidth; 
+        playerView.classList.add('active');
+        
+    } else { // 'home'
+        playerView.classList.remove('active');
+        setTimeout(() => { playerView.style.display = 'none'; }, 400);
+        
+        homeView.style.display = 'flex';
+        void homeView.offsetWidth;
+        homeView.classList.add('active');
+    }
+}
+
+// 监听原本播放状态，同步给 Mini Player
+// 提示：在你原本的 updateUI() 或 playMusic() 函数里调用 syncMiniPlayer() 即可！
+function syncMiniPlayer(title, artist, coverUrl, isPlaying) {
+    // 封面
+    const miniCover = document.getElementById('mini-cover');
+    const mainCover = document.getElementById('app-album-cover');
+    
+    if (coverUrl) {
+        miniCover.src = coverUrl;
+        // 同步主背景的模糊图 (新功能)
+        document.getElementById('app-dynamic-bg').style.backgroundImage = `url(${coverUrl})`;
+    }
+    
+    // 文本
+    if (title) document.getElementById('mini-title').innerText = title;
+    if (artist) document.getElementById('mini-artist').innerText = artist;
+    
+    // 播放/暂停状态及动画
+    const miniPlayBtn = document.getElementById('mini-play-btn');
+    const playBtnImgUrl = isPlaying ? "暂停图标的URL" : "播放图标的URL"; // 这里换成你原本管理暂停/播放的图
+    // miniPlayBtn.src = playBtnImgUrl; // 视你实际的逻辑解开注释
+    
+    if (isPlaying) {
+        miniCover.style.animationPlayState = 'running';
+        mainCover.style.animationPlayState = 'running';
+    } else {
+        miniCover.style.animationPlayState = 'paused';
+        mainCover.style.animationPlayState = 'paused';
+    }
+}
+
+// 修改你原本的 toggleMusicSearch 函数 (适配全屏弹出)
+// 原本你的可能只是改 display，现在咱们改 top 来实现抽屉滑出
+function toggleMusicSearch() {
+    const drawer = document.getElementById('search-drawer');
+    if (drawer.style.top === '0px' || drawer.style.top === '0%') {
+        drawer.style.top = '-100%';
+    } else {
+        drawer.style.top = '0';
+        // 自动聚焦搜索框
+        setTimeout(() => {
+            document.getElementById('music-search-keyword').focus();
+        }, 300);
+    }
 }
