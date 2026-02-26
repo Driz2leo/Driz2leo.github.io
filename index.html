@@ -509,210 +509,216 @@
 
 <div id="app-window-wechat" class="app-window">
     <div id="wx-main-view" style="position: relative; height: 100%; display: flex; flex-direction: column; background-color: #f5f6f8; overflow: hidden;">
-        
+
+        <!-- 聊天区域容器 -->
         <div class="chat-exclusive-container" style="flex: 1; display: flex; flex-direction: column;">
-            
+
             <input type="color" id="bg-color-picker" style="display: none;" value="#e6ebf5">
-
             <div class="chat-layer-1" id="chat-layered-bg" onclick="openColorPicker()"></div>
-            
             <div class="chat-layer-2"></div>
+            <div class="chat-layer-3" style="display: flex; flex-direction: column; height: 100%;">
+                <div id="wx-page-chat" style="display: block; height: 100%;">
+                    <div class="page-flex-box">
+                        <div class="wx-header-v4">
+                            <div class="wx-header-top-v4">
+                                <div class="wx-h-left-v2" onclick="openWxProfile()">
+                                    <div class="wx-small-avatar profile-avatar sync-avatar" id="wx_small_avatar_top"></div>
+                                    <div class="user-info-box">
+                                        <div class="user-name sync-name" id="wx_top_name_sync">˶>𖥦<˶</div>
+                                        <div class="user-status">
+                                            <svg viewBox="0 0 24 24" width="11" height="11" fill="#b0b0b0"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"></path></svg>
+                                            <span>刚刚来过</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="wx-h-action-box" style="position: relative;">
+                                    <div class="action-icon-btn" onclick="toggleHeaderMenu()">
+                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="#b0b0b0">
+                                            <rect x="5" y="10" width="2" height="4" rx="1"/>
+                                            <rect x="9" y="7" width="2" height="10" rx="1"/>
+                                            <rect x="13" y="4" width="2" height="16" rx="1"/>
+                                            <rect x="17" y="8" width="2" height="8" rx="1"/>
+                                        </svg>
+                                    </div>
+                                    <div id="wx-header-menu" class="wx-dropdown-menu">
+                                        <div class="wx-dd-item" onclick="alert('下次一定搓群聊功能....')">
+                                            <svg viewBox="0 0 24 24" width="18" height="18" fill="#333"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
+                                            <span>发起群聊</span>
+                                        </div>
+                                        <div class="wx-dd-divider"></div>
+                                        <div class="wx-dd-item" onclick="startAddChatFlow()">
+                                            <svg viewBox="0 0 24 24" width="18" height="18" fill="#333"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                                            <span>添加聊天</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="wx-search-wrapper-v4">
+                                <div class="wx-search-bar-v4">
+                                    <svg class="wx-search-icon" viewBox="0 0 24 24" width="14" height="14" fill="#c0c0c0"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                                    <span>カリカリ♡萌えすぎ！</span>
+                                </div>
+                            </div>
+                            <div class="wx-blink-tabs-v4" id="top-tabs-container">
+                                <div class="blink-tab-v4 active" onclick="switchChatSubTab('chat', this)">Chat</div>
+                                <div class="blink-tab-v4" onclick="switchChatSubTab('group', this)">Group</div>
+                                <div class="blink-tab-v4">★</div>
+                                <div class="blink-tab-v4">˶>𖥦<˶</div>
+                                <div class="blink-tab-v4">^>⸝⸝⸝⸝<^ ᐟ.ᐟ</div>
+                                <div class="tab-active-line-v4" id="tab-active-line"></div>
+                            </div>
+                            <div class="wx-windows-status-v4">
+                                <svg viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>
+                                <span>Logged in to Weixin for Windows...</span>
+                            </div>
+                        </div>
+                        <div class="scrollable-content">
+                            <div id="chat-sub-view-chat" style="display:block;">
+                                <div id="chat-list-container" class="ios-list-group"></div>
+                                <div id="chat-empty-tip" style="text-align:center; margin-top:50px; color:#ccc; display:none;">No chats yet...<br>Click + to add</div>
+                            </div>
+                            <div id="chat-sub-view-group" style="display:none; text-align:center; margin-top: 50px; color:#ccc;"><p>暂无群聊 (Group)</p></div>
+                            <div id="chat-sub-view-me" style="display:none; text-align:center; margin-top: 50px; color:#ccc;"><p>我的面具 (Persona)</p></div>
+                            <div style="height: 100px;"></div>
+                        </div> <!-- 结束 .scrollable-content -->
+                    </div> <!-- 结束 .page-flex-box -->
+                </div> <!-- 结束 #wx-page-chat -->
 
-<div class="chat-layer-3" style="display: flex; flex-direction: column; height: 100%;">
-    
-    <div id="wx-page-chat" style="display: block; height: 100%;">
-        <div class="page-flex-box">
-            <div class="wx-header-v4">
-                <div class="wx-header-top-v4">
-                    <div class="wx-h-left-v2" onclick="openWxProfile()">
-                        <div class="wx-small-avatar profile-avatar sync-avatar" id="wx_small_avatar_top"></div>
-                        <div class="user-info-box">
-                            <div class="user-name sync-name" id="wx_top_name_sync">˶>𖥦<˶</div>
-                            <div class="user-status">
-                                <svg viewBox="0 0 24 24" width="11" height="11" fill="#b0b0b0"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"></path></svg>
-                                <span>刚刚来过</span>
+                <!-- 通讯录页面 (初始隐藏) -->
+                <div id="wx-page-contacts" style="display: none; height: 100%; background: #fff;">
+                    <div class="page-flex-box">
+                        <div class="im-header">
+                            <div class="im-header-top">
+                                <div style="width: 30px;"></div>
+                                <span class="im-header-title">Contacts</span>
+                                <div class="im-add-btn-fix" onclick="openCreatorModeChoice()">
+                                    <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                                </div>
+                            </div>
+                            <div class="im-search-box">
+                                <div class="im-search-inner">
+                                    <svg class="im-search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                                    <input type="text" placeholder="search for" class="im-search-input">
+                                </div>
+                            </div>
+                            <div class="im-filter-row">
+                                <div class="im-filter-item active" id="tab-contacts-all" onclick="switchContactTab('all')">char</div>
+                                <div class="im-filter-item" id="tab-contacts-me" onclick="switchContactTab('me')">★ ME</div>
+                                <div class="im-filter-item">^^</div>
+                                <div class="im-filter-item">Service</div>
+                                <div class="im-filter-item">♥</div>
+                            </div>
+                            <div class="im-login-tip">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="#999"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>
+                                Logged in to Weixin for Windows...
+                            </div>
+                        </div> <!-- 结束 .im-header -->
+
+                        <div id="contact-list-container" class="im-list-container"></div>
+                    </div> <!-- 结束 .page-flex-box -->
+                </div> <!-- 结束 #wx-page-contacts -->
+
+                <!-- 朋友圈/发现页面 (初始隐藏) -->
+                <div id="wx-page-moments" class="ins-layout">
+                    <div class="ins-new-header" id="moments-cover-bg">
+                        <div class="ins-top-row">
+                            <div class="ins-avatar-section">
+                                <div class="ins-mood-bubble edit-text" style="top: -20px; left: 5px; transform:none;">Ing..☁️</div>
+                                <div class="ins-big-avatar" id="moments-host-avatar" style="width: 86px; height: 86px; border: 1px solid rgba(0,0,0,0.1);"></div>
+                            </div>
+                            <div class="ins-stats-section">
+                                <div class="ins-stat-box"><span class="ins-stat-num edit-text" id="moments-host- text-1">11</span><span class="ins-stat-label">posts</span></div>
+                                <div class="ins-stat-box"><span class="ins-stat-num edit-text" id="moments-host- text-2">1314</span><span class="ins-stat-label">followers</span></div>
+                                <div class="ins-stat-box"><span class="ins-stat-num edit-text" id="moments-host- text-3">520</span><span class="ins-stat-label">following</span></div>
                             </div>
                         </div>
-                    </div>
-                    <div class="wx-h-action-box" style="position: relative;">
-                        <div class="action-icon-btn" onclick="toggleHeaderMenu()">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="#b0b0b0">
-                                <rect x="5" y="10" width="2" height="4" rx="1"/>
-                                <rect x="9" y="7" width="2" height="10" rx="1"/>
-                                <rect x="13" y="4" width="2" height="16" rx="1"/>
-                                <rect x="17" y="8" width="2" height="8" rx="1"/>
-                            </svg>
+                        <div class="ins-bio-section">
+                            <div class="ins-bio-name" id="moments-host-name">昵称</div>
+                            <div class="ins-bio-text edit-text" id="moments-host- text-4">誓言是一场有时差的雨 🌧️<br>instagram: @lover</div>
                         </div>
-                        <div id="wx-header-menu" class="wx-dropdown-menu">
-                            <div class="wx-dd-item" onclick="alert('下次一定搓群聊功能....')">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="#333"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
-                                <span>发起群聊</span>
-                            </div>
-                            <div class="wx-dd-divider"></div>
-                            <div class="wx-dd-item" onclick="startAddChatFlow()">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="#333"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                                <span>添加聊天</span>
+                        <div class="ins-action-btns">
+                            <div class="ins-edit-btn">Edit profile</div>
+                            <div class="ins-edit-btn">Share profile</div>
+                            <div class="ins-icon-btn-small">
+                                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
                             </div>
                         </div>
-                    </div>
+                    </div> <!-- 结束 .ins-new-header -->
+
+                    <div class="ins-highlights-scroll" style="padding: 15px 15px; border-bottom: 1px solid #f0f0f0;">
+                        <div class="ins-highlight-item" onclick="openPostCreator()">
+                            <div class="ins-highlight-circle plus-btn" style="border: 1px solid #333;">
+                                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                            </div>
+                            <div class="ins-highlight-text">New</div>
+                        </div>
+                        <div class="ins-highlight-item">
+                            <div class="ins-highlight-circle upload-img" style="background-image: url('https://i.postimg.cc/dVrTXFYn/kuku10.gif');"></div>
+                            <div class="ins-highlight-text edit-text">Love</div>
+                        </div>
+                        <div class="ins-highlight-item">
+                            <div class="ins-highlight-circle upload-img" style="background-image: url('https://i.postimg.cc/TYY6FJvs/kuku16.gif');"></div>
+                            <div class="ins-highlight-text edit-text">Daily</div>
+                        </div>
+                        <div class="ins-highlight-item">
+                            <div class="ins-highlight-circle upload-img" style="background-image: url('https://i.postimg.cc/jjTJY1qT/kuku1.gif');"></div>
+                            <div class="ins-highlight-text edit-text">Cat</div>
+                        </div>
+                    </div> <!-- 结束 .ins-highlights-scroll -->
+
+                    <div id="moments-feed-container" class="ins-feed-area" style="padding-bottom: 100px; background: #fff;">
+                        <div style="padding: 50px; text-align: center; color: #ccc; font-size: 12px;">
+                            还没有动态哦，点击上方的 + 发一条吧！
+                        </div>
+                    </div> <!-- 结束 #moments-feed-container -->
+                </div> <!-- 结束 #wx-page-moments -->
+
+            </div> <!-- 结束 .chat-layer-3 ✅ 这里才是 chat-layer-3 的正确结束位置 -->
+
+        </div> <!-- 结束 .chat-exclusive-container -->
+
+        <!-- 底部 Tab 栏 -->
+        <div class="wx-tab-bar-solid">
+            <div class="wx-tab-item active" onclick="switchWxTab('chat', this)">
+                <div class="wx-tab-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,2 C6.48,2 2,6.03 2,11 C2,13.66 3.53,16.03 5.95,17.47 L5.37,20.73 C5.28,21.25 5.82,21.66 6.3,21.37 L10.63,18.84 C11.08,18.89 11.53,18.92 12,18.92 C17.52,18.92 22,14.89 22,9.92 C22,4.95 17.52,2 12,2 Z"></path>
+                    </svg>
+                    <div class="active-dash"></div>
                 </div>
-                <div class="wx-search-wrapper-v4">
-                    <div class="wx-search-bar-v4">
-                        <svg class="wx-search-icon" viewBox="0 0 24 24" width="14" height="14" fill="#c0c0c0"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        <span>カリカリ♡萌えすぎ！</span>
-                    </div>
-                </div>
-                <div class="wx-blink-tabs-v4" id="top-tabs-container">
-                    <div class="blink-tab-v4 active" onclick="switchChatSubTab('chat', this)">Chat</div>
-                    <div class="blink-tab-v4" onclick="switchChatSubTab('group', this)">Group</div>
-                    <div class="blink-tab-v4">★</div>
-                    <div class="blink-tab-v4">˶>𖥦<˶</div>
-                    <div class="blink-tab-v4">^>⸝⸝⸝⸝<^ ᐟ.ᐟ</div>
-                    <div class="tab-active-line-v4" id="tab-active-line"></div>
-                </div>
-                <div class="wx-windows-status-v4">
-                    <svg viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>
-                    <span>Logged in to Weixin for Windows...</span>
-                </div>
+                <span>微信</span>
             </div>
-
-            <div class="scrollable-content">
-                <div id="chat-sub-view-chat" style="display:block;">
-                    <div id="chat-list-container" class="ios-list-group"></div>
-                    <div id="chat-empty-tip" style="text-align:center; margin-top:50px; color:#ccc; display:none;">No chats yet...<br>Click + to add</div>
+            <div class="wx-tab-item" onclick="switchWxTab('contacts', this)">
+                <div class="wx-tab-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                    </svg>
+                    <div class="active-dash"></div>
                 </div>
-                <div id="chat-sub-view-group" style="display:none; text-align:center; margin-top: 50px; color:#ccc;"><p>暂无群聊 (Group)</p></div>
-                <div id="chat-sub-view-me" style="display:none; text-align:center; margin-top: 50px; color:#ccc;"><p>我的面具 (Persona)</p></div>
-                <div style="height: 100px;"></div>
+                <span>通讯录</span>
+            </div>
+            <div class="wx-tab-item" onclick="switchWxTab('moments', this)">
+                <div class="wx-tab-icon"> 
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 10.9c-.61 0-1.1.49-1.1 1.1s.49 1.1 1.1 1.1 1.1-.49 1.1-1.1-.49-1.1-1.1-1.1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm2.19 12.19L6 18l3.81-8.19L18 6l-3.81 8.19z"/>
+                    </svg>
+                    <div class="active-dash"></div>
+                    <div class="nav-blue-dot nav-moments-dot"></div> 
+                </div>
+                <span>发现</span>
+            </div>
+            <div class="wx-tab-item" onclick="switchWxTab('me', this)">
+                <div class="wx-tab-icon"> 
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                    <div class="active-dash"></div>
+                </div>
+                <span>我</span>
             </div>
         </div>
     </div>
-
-    <div id="wx-page-contacts" style="display: none; height: 100%; background: #fff;">
-        <div class="page-flex-box">
-            <div class="im-header">
-                <div class="im-header-top">
-                    <div style="width: 30px;"></div> 
-                    <span class="im-header-title">Contacts</span>
-                    <div class="im-add-btn-fix" onclick="openCreatorModeChoice()">
-                        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                    </div>
-                </div>
-                <div class="im-search-box">
-                    <div class="im-search-inner">
-                        <svg class="im-search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                        <input type="text" placeholder="search for" class="im-search-input">
-                    </div>
-                </div>
-                <div class="im-filter-row">
-                    <div class="im-filter-item active" id="tab-contacts-all" onclick="switchContactTab('all')">char</div>
-                    <div class="im-filter-item" id="tab-contacts-me" onclick="switchContactTab('me')">★ ME</div>
-                    <div class="im-filter-item">^^</div>
-                    <div class="im-filter-item">Service</div>
-                    <div class="im-filter-item">♥</div>
-                </div>
-                <div class="im-login-tip">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="#999"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>
-                    Logged in to Weixin for Windows...
-                </div>
-            </div>
-
-            <div id="contact-list-container" class="im-list-container scrollable-content"></div>
-        </div>
-    </div>
-
-    <div id="wx-page-moments" class="ins-layout" style="display: none; height: 100%; background: #fff;">
-        <div class="page-flex-box">
-            <div class="scrollable-content">
-                <div class="ins-new-header" id="moments-cover-bg">
-                    <div class="ins-top-row">
-                        <div class="ins-avatar-section">
-                            <div class="ins-mood-bubble edit-text" style="top: -20px; left: 5px; transform:none;">Ing..☁️</div>
-                            <div class="ins-big-avatar" id="moments-host-avatar" style="width: 86px; height: 86px; border: 1px solid rgba(0,0,0,0.1);"></div>
-                        </div>
-                        <div class="ins-stats-section">
-                            <div class="ins-stat-box"><span class="ins-stat-num edit-text" id="moments-host- text-1">11</span><span class="ins-stat-label">posts</span></div>
-                            <div class="ins-stat-box"><span class="ins-stat-num edit-text" id="moments-host- text-2">1314</span><span class="ins-stat-label">followers</span></div>
-                            <div class="ins-stat-box"><span class="ins-stat-num edit-text" id="moments-host- text-3">520</span><span class="ins-stat-label">following</span></div>
-                        </div>
-                    </div>
-                    <div class="ins-bio-section">
-                        <div class="ins-bio-name" id="moments-host-name">昵称</div>
-                        <div class="ins-bio-text edit-text" id="moments-host- text-4">誓言是一场有时差的雨 🌧️<br>instagram: @lover</div>
-                    </div>
-                    <div class="ins-action-btns">
-                        <div class="ins-edit-btn">Edit profile</div>
-                        <div class="ins-edit-btn">Share profile</div>
-                        <div class="ins-icon-btn-small">
-                            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="ins-highlights-scroll" style="border-bottom: 1px solid #f0f0f0;">
-                    <div class="ins-highlight-item" onclick="openPostCreator()">
-                        <div class="ins-highlight-circle plus-btn" style="border: 1px solid #333;">
-                            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-                        </div>
-                        <div class="ins-highlight-text">New</div>
-                    </div>
-                    <div class="ins-highlight-item">
-                        <div class="ins-highlight-circle upload-img" style="background-image: url('https://i.postimg.cc/dVrTXFYn/kuku10.gif');"></div>
-                        <div class="ins-highlight-text edit-text">Love</div>
-                    </div>
-                    <div class="ins-highlight-item">
-                        <div class="ins-highlight-circle upload-img" style="background-image: url('https://i.postimg.cc/TYY6FJvs/kuku16.gif');"></div>
-                        <div class="ins-highlight-text edit-text">Daily</div>
-                    </div>
-                    <div class="ins-highlight-item">
-                        <div class="ins-highlight-circle upload-img" style="background-image: url('https://i.postimg.cc/jjTJY1qT/kuku1.gif');"></div>
-                        <div class="ins-highlight-text edit-text">Cat</div>
-                    </div>
-                </div>
-
-                <div id="moments-feed-container" class="ins-feed-area" style="padding-bottom: 100px; background: #fff;">
-                    <div style="padding: 50px; text-align: center; color: #ccc; font-size: 12px;">
-                        还没有动态哦，点击上方的 + 发一条吧！
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>
-<div class="wx-tab-bar" style="z-index: 999;">
-    <div class="wx-tab-item active" onclick="switchWxTab('chat', this)">
-        <div class="wx-tab-icon">
-            <svg viewBox="0 0 24 24">
-                <path d="M12,2 C6.48,2 2,6.03 2,11 C2,13.66 3.53,16.03 5.95,17.47 L5.37,20.73 C5.28,21.25 5.82,21.66 6.3,21.37 L10.63,18.84 C11.08,18.89 11.53,18.92 12,18.92 C17.52,18.92 22,14.89 22,9.92 C22,4.95 17.52,2 12,2 Z"></path>
-            </svg>
-        </div>
-        <span>Chats</span>
-    </div>
-
-    <div class="wx-tab-item" onclick="switchWxTab('contacts', this)">
-        <div class="wx-tab-icon">
-            <svg viewBox="0 0 24 24">
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
-            </svg>
-        </div>
-        <span>Contacts</span>
-    </div>
-
-<div class="wx-tab-item" onclick="switchWxTab('moments', this)">
-    <div class="wx-tab-icon" style="position: relative;"> <svg viewBox="0 0 24 24">
-            <path d="M12 10.9c-.61 0-1.1.49-1.1 1.1s.49 1.1 1.1 1.1 1.1-.49 1.1-1.1-.49-1.1-1.1-1.1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm2.19 12.19L6 18l3.81-8.19L18 6l-3.81 8.19z"/>
-        </svg>
-        
-        <div class="nav-red-dot nav-moments-dot" style="display:none;"></div> 
-    </div>
-    <span>Discover</span>
-</div>
-   </div>
-
-            </div>
-        </div>
-   </div>
 
         <div id="app-window-settings" class="app-window">
             <div class="settings-ui">

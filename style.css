@@ -857,14 +857,112 @@ html, body, div, span, p, a, button, input, textarea {
 .blink-tab { padding: 6px 16px; border-radius: 16px; font-size: 13px; font-weight: 600; color: #999; cursor: pointer; transition: all 0.2s; }
 .blink-tab.active { background: #333; color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
-/* 底部悬浮Tab */
-.wx-tab-bar { height: 65px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 0.5px solid rgba(0,0,0,0.1); position: absolute; left: 0; right: 0; border-radius: 0; bottom: 30px; left: 20px; right: 20px; border-radius: 35px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); display: flex; justify-content: space-around; align-items: flex-start; padding-top: 10px; z-index: 9999 !important; }
-.wx-tab-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 60px; cursor: pointer; transition: transform 0.1s; }
-.wx-tab-item:active { transform: scale(0.95); }
-.wx-tab-icon svg { fill: #B0B0B0 !important; width: 26px !important; height: 26px !important; display: block !important; transition: fill 0.2s ease; }
-.wx-tab-item span { display: block !important; font-size: 10px; font-weight: 500; color: #B0B0B0; transition: color 0.2s ease; }
-.wx-tab-item.active .wx-tab-icon svg { fill: #007aff !important; }
-.wx-tab-item.active span { color: #007aff; }
+/* 底部Tab */
+.wx-tab-bar-solid {
+    position: absolute; 
+    bottom: 0;          
+    left: 0;            
+    width: 100%;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 20px 0; 
+    padding-bottom: calc(20px + env(safe-area-inset-bottom)); 
+    border-top: 0.5px solid #eaeaea; 
+    z-index: 999; }
+
+.wx-tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    cursor: pointer;
+    position: relative;
+    /* 取消移动端点击时的灰色阴影 */
+    -webkit-tap-highlight-color: transparent; 
+}
+
+/* 图标容器：蓝杠定位的基准 */
+.wx-tab-icon {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.2s ease;
+}
+
+/* 选中时图标轻轻上浮 */
+.wx-tab-item.active .wx-tab-icon {
+    transform: translateY(-2px);
+}
+
+/* 图标 SVG 颜色控制 */
+.wx-tab-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: #b0b0b0; /* 未选中的高级灰 */
+    transition: fill 0.3s ease;
+}
+
+.wx-tab-item.active svg {
+    fill: #222222; /* 选中后的深色 */
+}
+
+/* 底部文字样式 */
+.wx-tab-item span {
+    font-size: 11px;
+    color: #b0b0b0;
+    margin-top: 5px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.wx-tab-item.active span {
+    color: #222222; }
+
+/* =========================================
+   核心灵魂：绝对居中的小蓝杠
+   ========================================= */
+
+.active-dash {
+    position: absolute;
+    bottom: -8px; 
+    left: 50%;
+    transform: translateX(-50%) scaleX(0); 
+    
+    width: 14px; /* 蓝杠宽度 */
+    height: 3px; /* 蓝杠厚度 */
+    background-color: #2a82e4;
+    border-radius: 2px;
+    opacity: 0;
+    
+    /* 伸展动效 */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+/* 选中状态下蓝杠显现并展开 */
+.wx-tab-item.active .active-dash {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1); }
+
+/* =========================================
+   蓝色消息提示点 
+   ========================================= */
+
+.nav-blue-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background-color: #2a82e4;
+    border-radius: 50%;
+    border: 2px solid #ffffff; 
+    box-shadow: 0 2px 5px rgba(42, 130, 228, 0.3); }
 
 /* 右上角菜单 */
 .wx-dropdown-menu { position: absolute; top: 45px; right: 10px; background: #4c4c4c; color: #fff; border-radius: 6px; width: 150px; padding: 5px 0; display: none; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 200; }
@@ -3063,21 +3161,19 @@ body.offline-active #chat-msg-area {
 .wx-header-v4 {
     padding: 14px 16px 0 16px;
     background-color: #fff;
-}
+    height: auto; }
 
 .wx-header-top-v4 { 
     display: flex; 
     justify-content: space-between; 
     align-items: center; 
-    margin-bottom: 10px; 
-}
+    margin-bottom: 10px; }
 
 .wx-h-left-v2 { 
     display: flex; 
     align-items: center; 
     gap: 10px; 
-    cursor: pointer; 
-}
+    cursor: pointer;  }
 
 .wx-small-avatar { 
     width: 38px; 
@@ -3085,29 +3181,25 @@ body.offline-active #chat-msg-area {
     border-radius: 50%; 
     background-color: #eee; 
     border: 2px solid #fff;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
 
 .user-info-box { 
     display: flex; 
     flex-direction: column; 
-    justify-content: center; 
-}
+    justify-content: center;  }
 
 .user-name { 
     font-size: 15px; 
     font-weight: bold; 
     color: #111; 
-    margin-bottom: 2px; 
-}
+    margin-bottom: 2px; }
 
 .user-status { 
     display: flex; 
     align-items: center; 
     gap: 4px; 
     font-size: 10px; 
-    color: #a0a0a0; 
-}
+    color: #a0a0a0; }
 
 .action-icon-btn { 
     width: 30px; 
@@ -3117,8 +3209,7 @@ body.offline-active #chat-msg-area {
     justify-content: center; 
     cursor: pointer; 
     background-color: rgba(255,255,255,0.5); 
-    border-radius: 50%;
-}
+    border-radius: 50%; }
 
 /* =========================================
    3. 搜索框
@@ -3142,8 +3233,7 @@ body.offline-active #chat-msg-area {
     justify-content: space-between;
     position: relative;
     border-bottom: 1px solid #f2f2f2; 
-    margin-bottom: 0; 
-}
+    margin-bottom: 0; }
 
 .blink-tab-v4 {
     font-size: 12px;
@@ -3181,19 +3271,16 @@ body.offline-active #chat-msg-area {
     gap: 6px;
     padding: 10px 4px 6px 4px; 
     color: #999;
-    border-bottom: 1px solid #f9f9f9; 
-}
+    border-bottom: 1px solid #f9f9f9; }
 
 .wx-windows-status-v4 svg { 
     width: 13px; 
     height: 13px; 
-    fill: #b5b5b5; 
-}
+    fill: #b5b5b5; }
 
 .wx-windows-status-v4 span { 
     font-size: 11px; 
-    font-weight: 400;
-}
+    font-weight: 400;}
 
 /* ==========================================================================
    7. SETTINGS & 子页面 (设置与其部分子页面)
@@ -6328,25 +6415,31 @@ img { vertical-align: middle; }
     height: 100%;
     width: 100%;
 }
-
-/* 独立滚动区，互不干扰 */
+/* 修改你原有的这个类 */
 .scrollable-content {
     flex: 1;
     overflow-y: auto;
-    min-height: 0; /* 触发滚动的核心魔法 */
+    min-height: 0;
+    /* 新增下面这一行！给悬浮底栏留出 110px 的安全距离 */
+    padding-bottom: 110px !important; 
 }
 
-/* 3. 朋友圈：修复横向 Highlights 被挤压变形 */
 .ins-highlights-scroll {
     display: flex;
     overflow-x: auto;
     flex-wrap: nowrap; /* 强制不换行 */
-    padding: 15px 10px;
-}
+    padding: 15px 10px; }
 .ins-highlight-item {
-    flex-shrink: 0; /* 关键：绝对不允许被挤压 */
-    margin-right: 12px;
-}
+    flex-shrink: 0; 
+    margin-right: 12px; }
 .ins-highlights-scroll::-webkit-scrollbar {
-    display: none; /* 隐藏原生滚动条，更美观 */
+    display: none; }
+/* =========================================
+   强制页面互斥 (解决切换时页面重叠) - 包含 ME 页面
+   ========================================= */
+#wx-page-chat[style*="display: none"],
+#wx-page-contacts[style*="display: none"],
+#wx-page-moments[style*="display: none"],
+#wx-page-me[style*="display: none"] {
+    display: none !important;
 }

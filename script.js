@@ -1264,123 +1264,89 @@ window.openSubPage = function(id) {
 // ==========================================================
 // [5] 微信业务逻辑 (WeChat Core)
 // ==========================================================
-
-window.switchWxTab = function(tabName) {
-    const globalHeader = document.querySelector('.wx-header');
+// ==========================================
+// 1. 全局主标签切换逻辑 (修复顶栏留白 & 底栏同步)
+// ==========================================
+window.switchWxTab = function(tabName, el) {
+    const globalHeader = document.querySelector('.wx-header-v4');
     
-    // 隐藏所有子页面
-    ['wx-page-chat', 'wx-page-contacts', 'wx-page-moments', 'wx-page-profile'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
+    const pages = ['wx-page-chat', 'wx-page-contacts', 'wx-page-moments', 'wx-page-profile'];
+    pages.forEach(id => {
+        const page = document.getElementById(id);
+        if (page) page.style.display = 'none';
+    });
+    document.querySelectorAll('.wx-tab-item').forEach(item => {
+        item.classList.remove('active');
     });
 
-    // 移除Tab激活状态
-    document.querySelectorAll('.wx-tab-item').forEach(el => el.classList.remove('active'));
-
-    // 逻辑分流
     if (tabName === 'chat') {
-        if(globalHeader) globalHeader.style.display = 'flex'; 
-        document.getElementById('wx-page-chat').style.display = 'block'; 
-        document.querySelectorAll('.wx-tab-item')[0].classList.add('active');
-        renderChatList();
+
+        if (globalHeader) globalHeader.style.display = 'block'; 
+        const page = document.getElementById('wx-page-chat');
+        if (page) page.style.display = 'block';
+
+        const targetTab = el || document.querySelectorAll('.wx-tab-item')[0];
+        targetTab.classList.add('active');
+        
+        if(window.renderChatList) renderChatList();
+        setTimeout(updateTabIndicatorV4, 50);
     } 
     else if (tabName === 'contacts') {
-        if(globalHeader) globalHeader.style.display = 'none'; // 通讯录自带标题
-        document.getElementById('wx-page-contacts').style.display = 'flex';
-        document.querySelectorAll('.wx-tab-item')[1].classList.add('active');
-        switchContactTab('all');
+
+        if (globalHeader) globalHeader.style.display = 'none'; 
+        const page = document.getElementById('wx-page-contacts');
+        if (page) page.style.display = 'block';
+        const targetTab = el || document.querySelectorAll('.wx-tab-item')[1];
+        targetTab.classList.add('active');
+        
+        if(window.switchContactTab) switchContactTab('all');
     } 
-
     else if (tabName === 'moments') {
-        // 1. 立即切换 UI 状态，确保点击即反应，不阻塞
-        if(globalHeader) globalHeader.style.display = 'none'; 
-        document.getElementById('wx-page-moments').style.display = 'block';
-        document.querySelectorAll('.wx-tab-item')[2].classList.add('active');
 
-        // 2. 插入加载占位符 (让宝宝先看到转圈圈，而不是卡住)
+        if (globalHeader) globalHeader.style.display = 'none'; 
+        const page = document.getElementById('wx-page-moments');
+        if (page) page.style.display = 'block';
+        const targetTab = el || document.querySelectorAll('.wx-tab-item')[2];
+        targetTab.classList.add('active');
+
         const feedContainer = document.getElementById('moments-feed-container');
         if (feedContainer) {
             feedContainer.innerHTML = `
-                <div class="moments-loading-view">
-                    <div class="moments-spinner"></div>
-                    <div class="moments-loading-text">Loading...</div>
-                </div>
-            `;
+                <div style="padding:40px; text-align:center; color:#999;">
+                    <div class="moments-spinner"></div>正在加载动态...
+                </div>`;
         }
-
         setTimeout(() => {
-            // 先渲染头部（比较快）
             if(window.renderMomentsHeader) window.renderMomentsHeader();
-            if(window.renderMomentsFeed) {
-                window.renderMomentsFeed();
-                // 渲染完后，加载动画会自动被 renderMomentsFeed 里的 innerHTML = '' 给刷掉
-            }
-            
-            console.log("✨ 朋友圈异步加载完成，丝滑倍增！");
-        }, 10); 
+            if(window.renderMomentsFeed) window.renderMomentsFeed();
+        }, 100);
     }
 
-    else if (tabName === 'me') {
-        if(globalHeader) globalHeader.style.display = 'none';
-        document.getElementById('wx-page-profile').style.display = 'flex';
-        document.querySelectorAll('.wx-tab-item')[3].classList.add('active');
-    }
-};
-
-// 1. 专门负责“丝滑下划线”跟随移动的函数
-function updateTabIndicator() {
-    const tabsContainer = document.querySelector('.wx-blink-tabs-v2');
-    if (!tabsContainer) return;
-    
-    const activeTab = tabsContainer.querySelector('.blink-tab-v2.active');
-    const activeLine = tabsContainer.querySelector('.tab-active-line');
-
-    if (activeTab && activeLine) {
-        // 获取当前选中 Tab 的左侧位置和自身宽度
-        activeLine.style.left = activeTab.offsetLeft + 'px';
-        activeLine.style.width = activeTab.offsetWidth + 'px';
-    }
+else if (tabName === 'me') {
+    if (globalHeader) globalHeader.style.display = 'none';
+    const page = document.getElementById('wx-page-me'); 
+    if (page) page.style.display = 'block';
+    const targetTab = el || document.querySelectorAll('.wx-tab-item')[3];
+    targetTab.classList.add('active');
 }
 
-// ==========================================
-// 1. 自定义调色盘功能
-// ==========================================
-window.openColorPicker = function() {
-    // 触发隐藏的颜色选择器
-    document.getElementById('bg-color-picker').click();
 };
 
-// 监听颜色选择器的变化
-document.addEventListener('DOMContentLoaded', () => {
-    const colorPicker = document.getElementById('bg-color-picker');
-    const bgLayer = document.getElementById('chat-layered-bg');
-    
-    if (colorPicker && bgLayer) {
-        colorPicker.addEventListener('input', function(e) {
-            // 把你选中的颜色直接赋值给背景！
-            bgLayer.style.background = e.target.value;
-        });
-    }
-});
-
 // ==========================================
-// 2. 丝滑下划线跟踪 (加了多重保险)
+// 2. 聊天页子 Tab (Chat/Group) 下划线跟随
 // ==========================================
 function updateTabIndicatorV4() {
     const tabsContainer = document.querySelector('.wx-blink-tabs-v4');
-    if (!tabsContainer) return;
+    const activeLine = document.getElementById('tab-active-line');
+    if (!tabsContainer || !activeLine) return;
     
     const activeTab = tabsContainer.querySelector('.blink-tab-v4.active');
-    const activeLine = tabsContainer.querySelector('.tab-active-line-v4');
-
-    // 只有当获取到了宽度，才去设置位置
-    if (activeTab && activeLine && activeTab.offsetWidth > 0) {
+    if (activeTab && activeTab.offsetWidth > 0) {
         activeLine.style.left = activeTab.offsetLeft + 'px';
         activeLine.style.width = activeTab.offsetWidth + 'px';
     }
 }
 
-// 切换逻辑保持不变
 window.switchChatSubTab = function(subTabName, element) {
     document.querySelectorAll('.blink-tab-v4').forEach(el => el.classList.remove('active'));
     if(element) element.classList.add('active');
@@ -1396,35 +1362,53 @@ window.switchChatSubTab = function(subTabName, element) {
     updateTabIndicatorV4();
 };
 
-// 【关键修复】确保页面一打开，下划线就在那里！
-document.addEventListener('DOMContentLoaded', () => {
-    // 立即执行一次
-    updateTabIndicatorV4();
-    
-    // 稍微等一下，等 CSS 和字体完全加载好再执行一次 (双重保险)
-    setTimeout(updateTabIndicatorV4, 100);
-    setTimeout(updateTabIndicatorV4, 300); 
-});
-
-// 网页加载完毕后、或者窗口大小改变时，也重新算一下位置
-window.addEventListener('load', updateTabIndicatorV4);
-window.addEventListener('resize', updateTabIndicatorV4);
-
-window.openWxProfile = function() { document.getElementById('wx-profile-view').style.display = 'flex'; };
-window.closeWxProfile = function() {
-    const profile = document.getElementById('wx-profile-view');
-    profile.classList.add('closing'); 
-    
-    setTimeout(() => {
-        profile.style.display = 'none'; 
-        profile.classList.remove('closing'); 
-    }, 400);
+// ==========================================
+// 3. 其他交互功能 (颜色、菜单、个人主页)
+// ==========================================
+window.openColorPicker = function() {
+    document.getElementById('bg-color-picker').click();
 };
 
 window.toggleHeaderMenu = function() {
     const menu = document.getElementById('wx-header-menu');
     if(menu) menu.classList.toggle('active');
 };
+
+window.openWxProfile = function() { 
+    const profile = document.getElementById('wx-profile-view');
+    if(profile) profile.style.display = 'flex'; 
+};
+
+window.closeWxProfile = function() {
+    const profile = document.getElementById('wx-profile-view');
+    if(profile) {
+        profile.classList.add('closing'); 
+        setTimeout(() => {
+            profile.style.display = 'none'; 
+            profile.classList.remove('closing'); 
+        }, 400);
+    }
+};
+
+// ==========================================
+// 4. 初始化
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // 颜色选择器初始化
+    const colorPicker = document.getElementById('bg-color-picker');
+    const bgLayer = document.getElementById('chat-layered-bg');
+    if (colorPicker && bgLayer) {
+        colorPicker.addEventListener('input', (e) => {
+            bgLayer.style.background = e.target.value;
+        });
+    }
+
+    // 默认执行一次下划线位置计算
+    setTimeout(updateTabIndicatorV4, 300);
+});
+
+window.addEventListener('resize', updateTabIndicatorV4);
+
 // 点击空白关闭菜单
 document.addEventListener('click', (e) => {
     const menu = document.getElementById('wx-header-menu');
